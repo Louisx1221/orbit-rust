@@ -3,6 +3,62 @@ use crate::math::*;
 
 pub const MU: f32 = 3.986004118e14;
 
+pub fn orb_prop_2body(coe0: [f32; 6], dt: f32) -> [f32; 6] {
+    // 利用经典轨道根数轨道预报(二体)
+
+    // 输入：
+    // 初始经典轨道六根数 coe0 [6]
+    // coe(1) = semimajor axis          (m)
+    // coe(2) = orbital eccentricity    (-)     (0 <= eccentricity < 1)
+    // coe(3) = orbital inclination     (rad)   (0 <= inclination <= pi)
+    // coe(4) = RAAN                    (rad)   (0 <= RAAN <= 2 pi)
+    // coe(5) = argument of perigee     (rad)   (0 <= argument of perigee <= 2 pi)
+    // coe(6) = true anomaly            (rad)   (0 <= true anomaly <= 2 pi)
+    // 预报时长 dt (s)
+    
+    // 输出：
+    // 目标经典轨道六根数 coe [6]
+    
+    // 参考：
+    // 卫星姿态动力学与控制 章仁为 1998.08 V1 p5-7
+    
+    let sma0 = coe0[0];
+    let ecc0 = coe0[1];
+    let fa0 = coe0[5];
+    
+    let ea0 = fa2ea(fa0, ecc0); // 偏近点角
+    let ma0 = ea2ma(ea0, ecc0); // 平近点角
+    
+    let ma = ma0 + dt * (MU / sma0 / sma0 / sma0).sqrt();
+    let ea = ma2ea(ma, ecc0);
+    let fa = ea2fa(ea, ecc0);
+    
+    let mut coe = coe0;
+    coe[5] = fa;
+
+    coe
+}
+
+fn fa2ea(fa: f32, ecc: f32) -> f32 {
+    let ea = fmod(2. * (((1. - ecc) / (1. + ecc)).sqrt() * (fa / 2.).tan()).atan(), TWO_PI);
+    ea
+}
+
+fn ea2ma(ea: f32, ecc: f32) -> f32 {
+    let ma = fmod(ea - ecc * ea.sin(), TWO_PI);
+    ma
+}
+
+fn ma2ea(ma: f32, ecc: f32) -> f32 {
+    let ea = solve_kepler(ma, ecc);
+    ea
+}
+
+fn ea2fa(ea: f32, ecc: f32) -> f32 {
+    let fa = fmod(2. * (((1. + ecc) / (1. - ecc)).sqrt() * (ea / 2.).tan()).atan(), TWO_PI);
+    fa
+}
+
 pub fn solve_kepler(ma: f32, ecc: f32) -> f32 {
     // 初始参数
     // 设置容错度
@@ -139,5 +195,10 @@ impl Orb {
         self.coe[3] = raan;
         self.coe[4] = aop;
         self.coe[5] = ta;
+    }
+
+    pub fn orb_prop(&mut self, dt: f32) {
+        self.coe = orb_prop_2body(self.coe, dt);
+        self.jd += dt / 86400.;
     }
 }

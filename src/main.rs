@@ -12,10 +12,7 @@ fn main() {
         coe: [6.0, 7.0, 8.0, 9.0, 10.0, 11.0],
         jd: 12.0,
     };
-    //println!("r = {} {} {}", orb.r[0], orb.r[1], orb.r[2]);
     orb.rv2coe();
+    orb.orb_prop(86400.);
     println!("orb is {:#?}", orb);
-
-    let ea = solve_kepler(2.0, 0.2);
-    println!("ea = {}", ea);
 }
