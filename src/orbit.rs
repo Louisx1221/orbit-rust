@@ -1,4 +1,8 @@
-﻿// mod math;
+﻿//@file       : main.rs
+//@autor      : github.com/louisx1221
+//@date       : 2021/11/22
+
+// mod math;
 use crate::math::*;
 
 pub const MU: f32 = 3.986004118e14;
@@ -69,18 +73,18 @@ pub fn solve_kepler(ma: f32, ecc: f32) -> f32 {
     // 设置偏近点角E初值
     let mut ea: f32 = fmod(ma, TWO_PI);
     if ea < PI {
-        ea += ecc / 2.0;
+        ea += ecc / 2.;
     } else {
-        ea -= ecc / 2.0;
+        ea -= ecc / 2.;
     }
 
     // 牛顿迭代
     // 迭代次数
     let mut iter = 1;
     // 斜率
-    let mut ratio: f32 = 1.0;
+    let mut ratio: f32 = 1.;
     while (ratio.abs() > tol) || (iter < iter_max) {
-        ratio = (ea - ecc * ea.sin() - ma) / (1.0 - ecc * ea.cos());
+        ratio = (ea - ecc * ea.sin() - ma) / (1. - ecc * ea.cos());
         ea -= ratio;
         iter += 1;
     }
@@ -127,28 +131,28 @@ impl Orb {
         }
 
         // 半长轴
-        let sma = 1.0 / (2.0 / r_mag - v_mag * v_mag / MU);
+        let sma = 1. / (2. / r_mag - v_mag * v_mag / MU);
 
-        let p = if h_hat[0] == 0.0 {
-            0.0
+        let p = if h_hat[0] == 0. {
+            0.
         } else {
-            h_hat[0] / (1.0 + h_hat[2])
+            h_hat[0] / (1. + h_hat[2])
         };
-        let q = if h_hat[1] == 0.0 {
-            0.0
+        let q = if h_hat[1] == 0. {
+            0.
         } else {
-            -h_hat[1] / (1.0 + h_hat[2])
+            -h_hat[1] / (1. + h_hat[2])
         };
 
-        let const1 = 1.0 / (1.0 + p * p + q * q);
-        let mut f_hat: [f32; 3] = [0.0; 3];
-        let mut g_hat: [f32; 3] = [0.0; 3];
-        f_hat[0] = const1 * (1.0 - p * p + q * q);
-        f_hat[1] = const1 * 2.0 * p * q;
-        f_hat[2] = -const1 * 2.0 * p;
-        g_hat[0] = const1 * 2.0 * p * q;
-        g_hat[1] = const1 * (1.0 + p * p - q * q);
-        g_hat[2] = const1 * 2.0 * q;
+        let const1 = 1. / (1. + p * p + q * q);
+        let mut f_hat: [f32; 3] = [0.; 3];
+        let mut g_hat: [f32; 3] = [0.; 3];
+        f_hat[0] = const1 * (1. - p * p + q * q);
+        f_hat[1] = const1 * 2. * p * q;
+        f_hat[2] = -const1 * 2. * p;
+        g_hat[0] = const1 * 2. * p * q;
+        g_hat[1] = const1 * (1. + p * p - q * q);
+        g_hat[2] = const1 * 2. * q;
         let h = dot(ecc_vec, g_hat);
         let xk = dot(ecc_vec, f_hat);
         let x1 = dot(self.r, f_hat);
@@ -158,7 +162,7 @@ impl Orb {
         let ecc = (h * h + xk * xk).sqrt();
 
         // 轨道倾角
-        let mut inc = fmod(2.0 * (p * p + q * q).sqrt().atan(), TWO_PI); 
+        let mut inc = fmod(2. * (p * p + q * q).sqrt().atan(), TWO_PI); 
 
         // 真实纬度
         let lambda_t = fmod(atan2(y1, x1), TWO_PI);
@@ -167,21 +171,21 @@ impl Orb {
         let mut raan = if inc > 1e-8 {
             fmod(atan2(p, q), TWO_PI)
         } else {
-            0.0
+            0.
         };
 
         // 近地点幅角
         let mut aop = if ecc > 1e-8 {
             fmod(fmod(atan2(h, xk), TWO_PI) - raan, TWO_PI)
         } else {
-            0.0
+            0.
         };
 
         // 真近点角
         let mut ta = fmod(lambda_t - raan - aop, TWO_PI); 
 
         // 奇异值
-        if h_hat[2] == -1.0 {
+        if h_hat[2] == -1. {
             inc  = PI;
             raan = PI;
             aop  = fmod(-fmod(atan2(h, xk), TWO_PI) + raan, TWO_PI);
@@ -195,6 +199,41 @@ impl Orb {
         self.coe[3] = raan;
         self.coe[4] = aop;
         self.coe[5] = ta;
+    }
+
+    pub fn coe2rv(&mut self) {
+        let sma  = self.coe[0];
+        let ecc  = self.coe[1];
+        let inc  = self.coe[2];
+        let raan = self.coe[3];
+        let aop  = self.coe[4];
+        let ta   = self.coe[5];
+        
+        let slr = sma * (1. - ecc * ecc);
+        let rm = slr / (1. + ecc * ta.cos());
+
+        let arglat = aop + ta;
+        let sarglat = arglat.sin();
+        let carglat = arglat.cos();
+
+        let c4 = (MU / slr).sqrt();
+        let c5 = ecc * aop.cos() + carglat;
+        let c6 = ecc * aop.sin() + sarglat;
+
+        let sinc = inc.sin();
+        let cinc = inc.cos();
+        let sraan = raan.sin();
+        let craan = raan.cos();
+
+        // 位置矢量
+        self.r[0] = rm * (craan * carglat - sraan * sarglat * cinc);
+        self.r[1] = rm * (sraan * carglat + craan * sarglat * cinc);
+        self.r[2] = rm * sarglat * sinc;
+
+        // 速度矢量
+        self.v[0] = - c4 * (c6 * craan + c5 * sraan * cinc);
+        self.v[1] = - c4 * (c6 * sraan - c5 * craan * cinc);
+        self.v[2] = c4 * c5 * sinc;
     }
 
     pub fn orb_prop(&mut self, dt: f32) {

@@ -1,13 +1,17 @@
-﻿pub use core::f32::consts::PI;
+﻿//@file       : main.rs
+//@autor      : github.com/louisx1221
+//@date       : 2021/11/22
 
-pub const TWO_PI: f32 = 2.0 * PI;
+pub use core::f32::consts::PI;
+
+pub const TWO_PI: f32 = 2. * PI;
 
 pub fn fmod(val_in: f32, val_mod: f32) -> f32 {
     let mut val_out = val_in;
     while val_out > val_mod {
         val_out -= val_mod;
     }
-    while val_out < 0.0 {
+    while val_out < 0. {
         val_out += val_mod;
     }
     val_out
@@ -26,7 +30,7 @@ pub fn cross(a: [f32; 3], b: [f32; 3]) -> [f32; 3] {
 }
 
 pub fn dot(a: [f32; 3], b: [f32; 3]) -> f32 {
-    let mut c: f32 = 0.0;
+    let mut c: f32 = 0.;
     for i in 0..3 {
         c += a[i] * b[i];
     }
@@ -35,8 +39,8 @@ pub fn dot(a: [f32; 3], b: [f32; 3]) -> f32 {
 
 pub fn atan2(y: f32, x: f32) -> f32 {
     let mut out = (y / x).atan();
-    out = if x < 0.0 {
-        if y > 0.0 {
+    out = if x < 0. {
+        if y > 0. {
             out + PI
         } else {
             out - PI
