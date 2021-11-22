@@ -1,13 +1,13 @@
-﻿//@file       : main.rs
+﻿//@file       : orbit.rs
 //@autor      : github.com/louisx1221
 //@date       : 2021/11/22
 
 // mod math;
 use crate::math::*;
 
-pub const MU: f32 = 3.986004118e14;
+pub const MU: f64 = 3.986004118e14;
 
-pub fn orb_prop_2body(coe0: [f32; 6], dt: f32) -> [f32; 6] {
+pub fn orb_prop_2body(coe0: [f64; 6], dt: f64) -> [f64; 6] {
     // 利用经典轨道根数轨道预报(二体)
 
     // 输入：
@@ -43,27 +43,27 @@ pub fn orb_prop_2body(coe0: [f32; 6], dt: f32) -> [f32; 6] {
     coe
 }
 
-fn fa2ea(fa: f32, ecc: f32) -> f32 {
+fn fa2ea(fa: f64, ecc: f64) -> f64 {
     let ea = fmod(2. * (((1. - ecc) / (1. + ecc)).sqrt() * (fa / 2.).tan()).atan(), TWO_PI);
     ea
 }
 
-fn ea2ma(ea: f32, ecc: f32) -> f32 {
+fn ea2ma(ea: f64, ecc: f64) -> f64 {
     let ma = fmod(ea - ecc * ea.sin(), TWO_PI);
     ma
 }
 
-fn ma2ea(ma: f32, ecc: f32) -> f32 {
+fn ma2ea(ma: f64, ecc: f64) -> f64 {
     let ea = solve_kepler(ma, ecc);
     ea
 }
 
-fn ea2fa(ea: f32, ecc: f32) -> f32 {
+fn ea2fa(ea: f64, ecc: f64) -> f64 {
     let fa = fmod(2. * (((1. + ecc) / (1. - ecc)).sqrt() * (ea / 2.).tan()).atan(), TWO_PI);
     fa
 }
 
-pub fn solve_kepler(ma: f32, ecc: f32) -> f32 {
+pub fn solve_kepler(ma: f64, ecc: f64) -> f64 {
     // 初始参数
     // 设置容错度
     let tol = 1e-8;
@@ -71,7 +71,7 @@ pub fn solve_kepler(ma: f32, ecc: f32) -> f32 {
     let iter_max = 100;
 
     // 设置偏近点角E初值
-    let mut ea: f32 = fmod(ma, TWO_PI);
+    let mut ea: f64 = fmod(ma, TWO_PI);
     if ea < PI {
         ea += ecc / 2.;
     } else {
@@ -82,7 +82,7 @@ pub fn solve_kepler(ma: f32, ecc: f32) -> f32 {
     // 迭代次数
     let mut iter = 1;
     // 斜率
-    let mut ratio: f32 = 1.;
+    let mut ratio: f64 = 1.;
     while (ratio.abs() > tol) || (iter < iter_max) {
         ratio = (ea - ecc * ea.sin() - ma) / (1. - ecc * ea.cos());
         ea -= ratio;
@@ -94,10 +94,10 @@ pub fn solve_kepler(ma: f32, ecc: f32) -> f32 {
 
 # [derive(Debug)]
 pub struct Orb {
-    pub r: [f32; 3],
-    pub v: [f32; 3],
-    pub coe: [f32; 6],
-    pub jd: f32,
+    pub r: [f64; 3],
+    pub v: [f64; 3],
+    pub coe: [f64; 6],
+    pub jd: f64,
 }
 
 impl Orb {
@@ -107,7 +107,7 @@ impl Orb {
         let v_mag = norm(self.v);
 
         // 位置及速度单位向量
-        let mut r_hat: [f32; 3] = self.r;
+        let mut r_hat: [f64; 3] = self.r;
         for r_hat_i in r_hat.iter_mut() {
             *r_hat_i /= r_mag;
         }
@@ -115,13 +115,13 @@ impl Orb {
         // 角动量
         let hv = cross(self.r, self.v);
         let hv_mag = norm(hv);
-        let mut h_hat: [f32; 3] = hv;
+        let mut h_hat: [f64; 3] = hv;
         for h_hat_i in h_hat.iter_mut() {
             *h_hat_i /= hv_mag;
         }
 
         // 偏心率矢量
-        let mut v_tmp: [f32; 3] = self.v;
+        let mut v_tmp: [f64; 3] = self.v;
         for v_tmp_i in v_tmp.iter_mut() {
             *v_tmp_i /= MU;
         }
@@ -145,8 +145,8 @@ impl Orb {
         };
 
         let const1 = 1. / (1. + p * p + q * q);
-        let mut f_hat: [f32; 3] = [0.; 3];
-        let mut g_hat: [f32; 3] = [0.; 3];
+        let mut f_hat: [f64; 3] = [0.; 3];
+        let mut g_hat: [f64; 3] = [0.; 3];
         f_hat[0] = const1 * (1. - p * p + q * q);
         f_hat[1] = const1 * 2. * p * q;
         f_hat[2] = -const1 * 2. * p;
@@ -193,21 +193,11 @@ impl Orb {
         }
 
         // 经典轨道要素
-        self.coe[0] = sma;
-        self.coe[1] = ecc;
-        self.coe[2] = inc;
-        self.coe[3] = raan;
-        self.coe[4] = aop;
-        self.coe[5] = ta;
+        self.coe = [sma, ecc, inc, raan, aop, ta];
     }
 
     pub fn coe2rv(&mut self) {
-        let sma  = self.coe[0];
-        let ecc  = self.coe[1];
-        let inc  = self.coe[2];
-        let raan = self.coe[3];
-        let aop  = self.coe[4];
-        let ta   = self.coe[5];
+        let [sma, ecc, inc, raan, aop, ta] = self.coe;
         
         let slr = sma * (1. - ecc * ecc);
         let rm = slr / (1. + ecc * ta.cos());
@@ -236,8 +226,87 @@ impl Orb {
         self.v[2] = c4 * c5 * sinc;
     }
 
-    pub fn orb_prop(&mut self, dt: f32) {
+    pub fn orb_prop(&mut self, dt: f64) {
         self.coe = orb_prop_2body(self.coe, dt);
         self.jd += dt / 86400.;
     }
+}
+
+pub fn julian2gre(jd: f64) -> [f64; 6] {
+    // 计算儒略日对应的公历日期
+
+    // 输入：
+    // 儒略日 jd
+
+    // 输出：
+    // 公历日期 gd = [yr, mon, day, hr, min, sec]
+    // 年 yr
+    // 月 mon
+    // 日 day
+    // 时 hr
+    // 分 min
+    // 秒 sec
+
+    // 参考：
+    // Jean Meeus《Astronomical Algorithms》2nd, p59-66
+
+    let jd_plus = jd + 0.5;
+    let z = jd_plus.floor();  // 天数取整
+    let f = jd_plus - z; // 取小数部分
+    let a = if z < 2299161. {
+        z
+    } else {
+        let alpha = ((z - 1867216.25) / 36524.25).floor();
+        z + 1. + alpha - (alpha / 4.).floor()
+    };
+
+    let b = a + 1524.;
+    let c = ((b - 122.1) / 365.25).floor();
+    let d = (365.25 * c).floor();
+    let e = ((b - d) / 30.6001).floor();
+
+    let day = b - d - (30.6001 * e).floor();
+    let hr  = (f * 24.).floor();
+    let min = ((f * 24. - hr) * 60.).floor();
+    let sec = ((((f * 24. - hr) * 60.) - min) * 60.).floor();
+    let mon = if e < 14. {
+        e - 1.
+    } else {
+        e - 13.
+    };
+
+    let yr = if mon > 2. {
+        c - 4716.
+    } else {
+        c - 4715.
+    };
+
+    let gd: [f64; 6] = [yr, mon, day, hr, min, sec];
+    gd
+}
+
+pub fn gre2julian(gd: [f64; 6]) -> f64 { 
+    // 公历日期转儒略日数
+
+    // 输入：
+    // 年 yr  1900-2100
+    // 月 mon 1-12
+    // 日 day 1-31
+    // 时 hr  0-23
+    // 分 min 0-59
+    // 秒 sec 0-59
+
+    // 输出：
+    // 儒略日期 jd (days)
+
+    // 参考：
+    // Fundamentals of Astrodynamics and Applications, Vallado, 4th
+
+    let [yr, mon, day, hr, min, sec] = gd;
+    let jd = 367.0 * yr 
+        - ((7. * (yr + ((mon + 9.) / 12.).floor())) / 4.).floor()
+        + (275. * mon / 9.).floor()
+        + day + 1721013.5
+        + ((sec / 60. + min) / 60. + hr) / 24.;
+    jd
 }

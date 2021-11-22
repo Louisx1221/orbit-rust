@@ -1,4 +1,4 @@
-﻿//@file       : main.rs
+﻿//@file       : math.rs
 //@autor      : github.com/louisx1221
 //@date       : 2021/11/22
 
@@ -19,5 +19,8 @@ fn main() {
     orb.rv2coe();
     orb.orb_prop(86400.);
     orb.coe2rv();
+    orb.jd = gre2julian([2021., 11., 22., 21., 25., 17.]);
     println!("orb is {:#?}", orb);
+    let gd = julian2gre(orb.jd);
+    println!("gd is {:?}", gd);
 }
