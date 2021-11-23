@@ -5,7 +5,9 @@
 // mod math;
 use crate::math::*;
 
-pub const MU: f64 = 3.986004118e14;
+pub const MU: f64 = 3.986004118e5; // km^3/s^2
+pub const J2: f64 = 1.08262668355e-3; // km/s^2
+pub const RE: f64 = 6378.137; // km
 
 pub fn orb_prop_2body(coe0: [f64; 6], dt: f64) -> [f64; 6] {
     // 利用经典轨道根数轨道预报(二体)
@@ -90,6 +92,22 @@ pub fn solve_kepler(ma: f64, ecc: f64) -> f64 {
     }
 
     ea
+}
+
+pub fn orb_prop_j2(x: Vec<f64>) -> Vec<f64> {
+	let r = (x[0] * x[0] + x[1] * x[1] + x[2] * x[2]).sqrt();
+	let r3 = r * r * r;  // r^3
+    let req2dr2 = RE / r * RE / r;
+    let z2dr2 = x[2] / r * x[2] / r;
+
+    let mut dx = x.clone();
+	dx[0] = x[3];
+	dx[1] = x[4];
+	dx[2] = x[5];
+	dx[3] = -MU * x[0] / r3 * (1. + 1.5 * J2 * req2dr2 * (1. - 5. * z2dr2));
+	dx[4] = -MU * x[1] / r3 * (1. + 1.5 * J2 * req2dr2 * (1. - 5. * z2dr2));
+	dx[5] = -MU * x[2] / r3 * (1. + 1.5 * J2 * req2dr2 * (3. - 5. * z2dr2));
+    dx
 }
 
 # [derive(Debug)]
