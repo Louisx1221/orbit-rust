@@ -110,6 +110,71 @@ pub fn orb_prop_j2(x: Vec<f64>) -> Vec<f64> {
     dx
 }
 
+pub fn hohnmann_trans(ri: f64, rf: f64) -> ([f64; 3], f64) {
+    // Fundamentals of Astrodynamics and Applications, Vallado, 3rd, p327
+    let a = (ri + rf) / 2.;
+
+    let vi = (MU / ri).sqrt();
+    let vf = (MU / rf).sqrt();
+
+    let v1 = (MU * (2. / ri - 1. / a)).sqrt();
+    let v2 = (MU * (2. / rf - 1. / a)).sqrt();
+
+    let mut dv: [f64; 3] = [0.; 3];
+    dv[0] = v1 - vi;
+    dv[1] = vf - v2;
+    dv[2] = dv[0].abs() + dv[1].abs();
+
+    let dt = PI * (a * a * a / MU).sqrt();
+
+    (dv, dt)
+}
+
+pub fn bi_elliptic_trans(ri: f64, rt: f64, rf: f64) -> ([f64; 4], [f64; 3]) {
+    // Fundamentals of Astrodynamics and Applications, Vallado, 3rd, p328
+    let a1 = (ri + rt) / 2.;
+    let a2 = (rt + rf) / 2.;
+
+    let vi = (MU / ri).sqrt();
+    let v1 = (MU * (2. / ri - 1. / a1)).sqrt();
+    let v2 = (MU * (2. / rt - 1. / a1)).sqrt();
+    let v3 = (MU * (2. / rt - 1. / a2)).sqrt();
+    let v4 = (MU * (2. / rf - 1. / a2)).sqrt();
+    let vf = (MU / rf).sqrt();
+
+    let mut dv: [f64; 4] = [0.; 4];
+    dv[0] = v1 - vi;
+    dv[1] = v3 - v2;
+    dv[2] = vf - v4;
+    dv[3] = dv[0].abs() + dv[1].abs() + dv[2].abs();
+
+    let mut dt: [f64; 3] = [0.; 3];
+    dt[0] = PI * (a1 * a1 * a1 / MU).sqrt();
+    dt[1] = PI * (a2 * a2 * a2 / MU).sqrt();
+    dt[2] = dt[0] + dt[1];
+
+    (dv, dt)
+}
+
+pub fn coaxial_elliptical_trans(ri: [f64; 2], rf: [f64; 2]) -> ([f64; 3], f64) {
+    // 航天器轨道动力学, 赵钧, p45
+    // rai = ri[0], rpi = ri[1]
+    let vpi = (MU / ri[1] * 2. * ri[0] / (ri[0] + ri[1])).sqrt();
+    let vp  = (MU / ri[1] * 2. * rf[0] / (rf[0] + ri[1])).sqrt();
+    let vaf = (MU / rf[0] * 2. * rf[1] / (rf[0] + rf[1])).sqrt();
+    let va  = (MU / rf[0] * 2. * ri[1] / (rf[0] + ri[1])).sqrt();
+
+    let mut dv: [f64; 3] = [0.; 3];
+    dv[0] = vp - vpi;
+    dv[1] = vaf - va;
+    dv[2] = dv[0].abs() + dv[1].abs();
+
+    let a = (rf[0] + ri[1]) / 2.;
+    let dt = PI * ( a * a * a/ MU).sqrt();
+
+    (dv, dt)
+}
+
 # [derive(Debug)]
 pub struct Orb {
     pub r: [f64; 3],
