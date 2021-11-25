@@ -21,6 +21,15 @@ pub fn norm(vec: [f64; 3]) -> f64 {
     (vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]).sqrt()
 }
 
+pub fn unit(vec: [f64; 3]) -> [f64; 3] {
+    let vec_mag = norm(vec);
+    let mut out = vec;
+    for element in out.iter_mut() {
+        *element /= vec_mag;
+    }
+    out
+}
+
 pub fn cross(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
     let mut c: [f64; 3] = [0.0; 3];
     c[0] = a[1] * b[2] - a[2] * b[1];
@@ -82,7 +91,7 @@ pub fn rkf78(eq: fn(Vec<f64>) -> Vec<f64>, x0: Vec<f64>, ti: f64, tf: f64, h: f6
     let mut xdot;
     let neq = x.len();
     let mut f: Vec<[f64; 13]> = Vec::new();
-    while f.len() < neq {
+    for _i in 0..neq {
         f.push([0.; 13]);
     }
 

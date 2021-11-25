@@ -331,7 +331,7 @@ pub fn julian2gre(jd: f64) -> [f64; 6] {
     // 秒 sec
 
     // 参考：
-    // Jean Meeus《Astronomical Algorithms》2nd, p59-66
+    // Astronomical Algorithms, Jean Meeus, 2nd, p59-66
 
     let jd_plus = jd + 0.5;
     let z = jd_plus.floor();  // 天数取整
