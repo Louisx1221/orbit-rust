@@ -6,7 +6,7 @@
 use crate::math::*;
 
 pub const MU: f64 = 3.986004118e5; // km^3/s^2
-pub const J2: f64 = 1.08262668355e-3; // km/s^2
+pub const J2: f64 = 1.08262668355e-3;
 pub const RE: f64 = 6378.137; // km
 
 pub fn orb_prop_2body(coe0: [f64; 6], dt: f64) -> [f64; 6] {
