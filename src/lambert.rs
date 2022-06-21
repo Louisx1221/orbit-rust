@@ -154,7 +154,7 @@ pub fn lambert_izzo2015(r1: [f64; 3], r2: [f64; 3], tof: f64, cw: f64, multi_rev
 
     // 3.2 multi rev solutions
     let mut tmp;
-    for i in 0..m_nmax as usize { 
+    for i in 0..(m_nmax + 1) as usize { 
         // 3.2.1 left Householder iterations
         tmp = ((i as f64 * PI + PI) / (8. * t)).powf(2. / 3.);
         m_x[2 * i + 1] = (tmp - 1.) / (tmp + 1.);
